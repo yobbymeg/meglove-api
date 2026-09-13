@@ -297,6 +297,42 @@ function handleMessage(ws, senderId, msg) {
     return;
   }
 
+  // === DM (direct message) ===
+  if (type === 'dm') {
+    const targetWs = onlineUsers.get(msg.targetUserId);
+    const dmMsg = {
+      type: 'dm',
+      fromUserId: senderId,
+      fromName: sender.username,
+      toUserId: msg.targetUserId,
+      text: msg.text || null,
+      mediaType: msg.mediaType || 'text',
+      mediaData: msg.mediaData || null,
+      duration: msg.duration || null,
+      timestamp: Date.now(),
+    };
+    // Send to target
+    if (targetWs && targetWs.readyState === targetWs.OPEN) {
+      targetWs.send(JSON.stringify(dmMsg));
+    }
+    // Echo back to sender (for confirmation)
+    ws.send(JSON.stringify(dmMsg));
+    return;
+  }
+
+  // === Typing indicator (DM) ===
+  if (type === 'dm-typing') {
+    const targetWs = onlineUsers.get(msg.targetUserId);
+    if (targetWs && targetWs.readyState === targetWs.OPEN) {
+      targetWs.send(JSON.stringify({
+        type: 'dm-typing',
+        fromUserId: senderId,
+        isTyping: msg.isTyping,
+      }));
+    }
+    return;
+  }
+
   // === WebRTC signaling (offer/answer/ICE) ===
   if (['call-offer', 'call-answer', 'ice-candidate'].includes(type)) {
     if (msg.targetUserId) {
