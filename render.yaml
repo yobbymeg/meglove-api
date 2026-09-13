@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: meglove-backend
+    name: meglove-api
     runtime: node
     plan: free
     region: singapore
